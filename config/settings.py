@@ -1,4 +1,6 @@
-# Configuration parameters for the Invisibility Cloak System
+"""
+Configuration parameters for the Invisibility Cloak System
+"""
 
 # ============================================================================
 # CAMERA SETTINGS
@@ -8,8 +10,9 @@ FRAME_WIDTH = 1280
 FRAME_HEIGHT = 720
 FPS = 30
 
-CLOAK_COLOR_LOWER = (10, 95, 140)   # ← Your exact center color - 2
-CLOAK_COLOR_UPPER = (14, 255, 255)  # ← Your exact center color + 2
+# Red cloth HSV values - ADJUST THESE FOR YOUR SPECIFIC CLOTH!
+CLOAK_COLOR_LOWER = (0, 100, 100)
+CLOAK_COLOR_UPPER = (10, 255, 255)
 
 # Alternative color presets (HSV format)
 COLOR_PRESETS = {
@@ -30,35 +33,43 @@ COLOR_PRESETS = {
     'yellow': {
         'lower': (20, 100, 100),
         'upper': (40, 255, 255)
+    },
+    'orange': {
+        'lower': (10, 100, 100),
+        'upper': (25, 255, 255)
+    },
+    'purple': {
+        'lower': (130, 100, 100),
+        'upper': (160, 255, 255)
     }
 }
 
 # ============================================================================
 # BACKGROUND CAPTURE SETTINGS
 # ============================================================================
-BACKGROUND_CAPTURE_FRAMES = 30  # Number of frames to capture for background
-BACKGROUND_BLUR_KERNEL = (21, 21)  # Kernel size for averaging background
-BACKGROUND_CAPTURE_WAIT_TIME = 3  # Seconds to wait before capturing
+BACKGROUND_CAPTURE_FRAMES = 30  # Number of frames to capture for background averaging
+BACKGROUND_BLUR_KERNEL = (21, 21)  # Kernel size for smoothing background
+BACKGROUND_CAPTURE_WAIT_TIME = 2  # Seconds to wait before capturing (for stability)
 
 # ============================================================================
-# MORPHOLOGICAL OPERATIONS
+# MORPHOLOGICAL OPERATIONS - Remove noise from mask
 # ============================================================================
-MORPH_KERNEL_SIZE = (5, 5)
-EROSION_ITERATIONS = 2
-DILATION_ITERATIONS = 3
+MORPH_KERNEL_SIZE = (5, 5)  # Size of morphological kernel
+EROSION_ITERATIONS = 2  # Remove small noise
+DILATION_ITERATIONS = 3  # Restore object size and fill holes
 
 # ============================================================================
-# BLENDING SETTINGS
+# BLENDING SETTINGS - How to blend background with current frame
 # ============================================================================
-BLEND_METHOD = 'gaussian'  # 'simple', 'gaussian', or 'alpha'
-GAUSSIAN_BLUR_KERNEL = (15, 15)
-GAUSSIAN_BLUR_SIGMA = 0
+BLEND_METHOD = 'gaussian'  # Options: 'simple', 'gaussian', 'alpha', 'pyramid'
+GAUSSIAN_BLUR_KERNEL = (15, 15)  # Size of Gaussian kernel for smooth edges
+GAUSSIAN_BLUR_SIGMA = 0  # Sigma for Gaussian blur (0 = auto-calculate)
 
 # ============================================================================
 # DISPLAY SETTINGS
 # ============================================================================
-DISPLAY_FPS = True
-DISPLAY_INFO = True
+DISPLAY_FPS = True  # Show FPS counter
+DISPLAY_INFO = True  # Show status information
 WINDOW_NAME = 'Invisibility Cloak - Real Time'
 INFO_COLOR = (0, 255, 0)  # Green color for text (BGR format)
 INFO_FONT = 'hershey_simplex'
@@ -69,10 +80,10 @@ INFO_THICKNESS = 2
 # PERFORMANCE SETTINGS
 # ============================================================================
 FRAME_SKIP = 1  # Process every Nth frame (1 = process every frame)
-USE_THREADING = True  # Use threading for background capture
-RESIZE_FOR_PROCESSING = True
+USE_THREADING = True  # Use threading for background capture (non-blocking)
+RESIZE_FOR_PROCESSING = False  # Resize frame for faster processing
 PROCESSING_WIDTH = 640  # Resize frame width for faster processing
-PROCESSING_HEIGHT = 480
+PROCESSING_HEIGHT = 480  # Resize frame height for faster processing
 
 # ============================================================================
 # DEBUG MODE

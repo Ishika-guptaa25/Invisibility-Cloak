@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 """
-InvisibilityCloakProcessor
+InvisibilityCloakProcessor - FIXED VERSION
 Main processor that orchestrates all modules for the invisibility cloak effect.
 """
 
@@ -127,7 +128,10 @@ class InvisibilityCloakProcessor:
             bool: True if background captured successfully
         """
         print("[InvisibilityCloakProcessor] Starting background capture...")
-        return self.background_capture.capture_frames(self.camera)
+        success = self.background_capture.capture_frames(self.camera)
+        if success:
+            self.background_ready = True
+        return success
 
     def process_frame(self, frame):
         """
@@ -137,7 +141,7 @@ class InvisibilityCloakProcessor:
             frame (np.ndarray): Input frame in BGR format
 
         Returns:
-            np.ndarray: Processed frame with invisibility cloak effect
+            tuple: (result_frame, mask)
         """
         # Resize for processing if needed
         if RESIZE_FOR_PROCESSING:
@@ -308,8 +312,6 @@ class InvisibilityCloakProcessor:
         print("[InvisibilityCloakProcessor] Waiting for background capture...")
         print("[InvisibilityCloakProcessor] Press SPACE to start background capture")
 
-        background_captured = False
-
         try:
             while self.is_running:
                 frame_start = time.time()
@@ -320,22 +322,47 @@ class InvisibilityCloakProcessor:
                     print("[InvisibilityCloakProcessor] Error: Could not read frame")
                     break
 
-                # Draw info before background capture
-                display_frame = self.frame.copy()
-                display_frame = self.draw_info(display_frame)
+                # FIX: Always process frame, just show different message if BG not ready
+                if self.background_ready:
+                    # Process frame with invisibility cloak effect
+                    result_frame, mask = self.process_frame(self.frame)
+                    detected_pixels = self.color_detector.get_detected_pixel_count(mask)
 
-                # Show waiting message
-                if not background_captured:
+                    # Add info overlay
+                    display_frame = self.draw_info(result_frame, mask, detected_pixels)
+
+                    # Show debug info if enabled
+                    if DEBUG_MODE:
+                        self.display_debug_info(display_frame, mask)
+                else:
+                    # Background not ready yet - show waiting message
+                    display_frame = self.frame.copy()
+                    display_frame = self.draw_info(display_frame)
+
+                    # Draw waiting message in center
+                    h, w = display_frame.shape[:2]
                     cv2.putText(
                         display_frame,
-                        "Press SPACE to capture background",
-                        (self.frame.shape[1] // 2 - 200, self.frame.shape[0] // 2),
+                        "PRESS SPACE TO CAPTURE BACKGROUND",
+                        (w // 2 - 250, h // 2 - 50),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1.2,
+                        (0, 0, 255),
+                        3
+                    )
+
+                    # Draw instructions
+                    cv2.putText(
+                        display_frame,
+                        f"Hold {self.cloak_color.upper()} cloth in frame",
+                        (w // 2 - 200, h // 2 + 50),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         1.0,
-                        (0, 0, 255),
+                        (255, 255, 0),
                         2
                     )
 
+                # Display the frame
                 cv2.imshow(WINDOW_NAME, display_frame)
 
                 # Handle key presses
@@ -345,29 +372,16 @@ class InvisibilityCloakProcessor:
                     self.is_running = False
 
                 elif key == ord(' '):  # Space - capture background
-                    if not background_captured:
+                    if not self.background_ready:
                         if self.capture_background():
-                            self.background_ready = True
-                            background_captured = True
                             print("[InvisibilityCloakProcessor] Background captured successfully!")
+                        else:
+                            print("[InvisibilityCloakProcessor] Failed to capture background")
 
                 elif key == ord('r'):  # Reset
                     self.background_capture.reset()
                     self.background_ready = False
-                    background_captured = False
                     print("[InvisibilityCloakProcessor] Reset - background cleared")
-
-                # Process frame if background is ready
-                if background_captured:
-                    result_frame, mask = self.process_frame(self.frame)
-                    detected_pixels = self.color_detector.get_detected_pixel_count(mask)
-
-                    result_frame = self.draw_info(result_frame, mask, detected_pixels)
-
-                    if DEBUG_MODE:
-                        self.display_debug_info(result_frame, mask)
-
-                    cv2.imshow(WINDOW_NAME, result_frame)
 
                 # Update FPS counter
                 frame_time = time.time() - frame_start

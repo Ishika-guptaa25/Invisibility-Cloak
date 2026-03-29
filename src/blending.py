@@ -1,5 +1,5 @@
 """
-Blending Module
+Blending Module - FIXED VERSION
 Handles blending the background image with the cloak region.
 """
 
@@ -44,12 +44,12 @@ class BackgroundBlender:
         Returns:
             np.ndarray: Blended result
         """
-        # Invert mask (we want to keep non-cloak areas)
-        mask_inv = cv2.bitwise_not(mask)
+        # mask has 255 where cloak is detected
+        # We want to REPLACE cloak area with background
 
         # Convert mask to 3 channels
         mask_3channel = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-        mask_inv_3channel = cv2.cvtColor(mask_inv, cv2.COLOR_GRAY2BGR)
+        mask_inv_3channel = cv2.cvtColor(cv2.bitwise_not(mask), cv2.COLOR_GRAY2BGR)
 
         # Blend: keep original frame where mask is 0, use background where mask is 255
         result = cv2.bitwise_and(frame, mask_inv_3channel) + \
@@ -79,6 +79,8 @@ class BackgroundBlender:
         smooth_mask_3channel = np.dstack([smooth_mask_normalized] * 3)
 
         # Blend using the smooth mask
+        # Where mask=255 (cloak), use more background
+        # Where mask=0 (non-cloak), use more frame
         frame_float = frame.astype(np.float32)
         background_float = background.astype(np.float32)
 
@@ -106,11 +108,13 @@ class BackgroundBlender:
         # Get mask indices
         mask_indices = mask > 0
 
-        # Blend in masked regions
-        result[mask_indices] = cv2.addWeighted(
-            frame[mask_indices], 1 - alpha,
-            background[mask_indices], alpha, 0
-        )
+        # Blend in masked regions using addWeighted
+        if np.any(mask_indices):
+            blended_region = cv2.addWeighted(
+                frame[mask_indices].astype(np.float32), 1 - alpha,
+                background[mask_indices].astype(np.float32), alpha, 0
+            ).astype(np.uint8)
+            result[mask_indices] = blended_region
 
         return result
 
@@ -126,8 +130,11 @@ class BackgroundBlender:
         Returns:
             np.ndarray: Blended result
         """
-        # Create Gaussian pyramids
-        mask_normalized = mask.astype(np.float32) / 255.0
+        # Create smooth mask using Gaussian blur
+        smooth_mask = cv2.GaussianBlur(mask, (25, 25), 0)
+
+        # Normalize to 0-1 range
+        mask_normalized = smooth_mask.astype(np.float32) / 255.0
         mask_3channel = np.dstack([mask_normalized] * 3)
 
         # Blend with weighted mask
