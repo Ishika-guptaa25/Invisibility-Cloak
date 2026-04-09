@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Quick Diagnostic - Test if cloth detection is working
-Run this to see what's happening with color detection
-"""
-
 import cv2
 import numpy as np
 from config.settings import CLOAK_COLOR_LOWER, CLOAK_COLOR_UPPER
