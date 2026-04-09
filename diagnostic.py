@@ -31,14 +31,14 @@ try:
         if not ret:
             break
 
-        # Convert to HSV
+        
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        # Get center pixel
+        
         h, w = frame.shape[:2]
         center_h_val, center_s_val, center_v_val = hsv[h // 2, w // 2]
 
-        # Create mask with current settings
+        
         lower = np.array(CLOAK_COLOR_LOWER, dtype=np.uint8)
         upper = np.array(CLOAK_COLOR_UPPER, dtype=np.uint8)
         mask = cv2.inRange(hsv, lower, upper)
