@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-HSV Color Calibration & Diagnostic Tool
-Helps identify the exact HSV range for your specific cloak/fabric color.
-"""
-
 import cv2
 import numpy as np
 import sys
